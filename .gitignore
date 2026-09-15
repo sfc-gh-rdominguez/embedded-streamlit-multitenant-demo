@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+auth/clients.json
+auth/web.env
+node_modules/
+app/output/
+web/dist/
+__pycache__/
+*.py[cod]
+.venv/
+.cortex/
+.DS_Store
+*.log
+.streamlit/secrets.toml

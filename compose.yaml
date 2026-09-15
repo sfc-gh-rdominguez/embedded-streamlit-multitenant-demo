@@ -1,0 +1,74 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    command: start-dev
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: ${KEYCLOAK_PUBLIC_URL}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    networks: [springfield]
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    command: http keycloak:8080 --url ${KEYCLOAK_PUBLIC_URL}
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    restart: unless-stopped
+    depends_on: [keycloak]
+    networks: [springfield]
+
+  auth:
+    build: ./auth
+    environment:
+      KEYCLOAK_URL: ${KEYCLOAK_PUBLIC_URL}
+      SNOWFLAKE_HOST: ${SNOWFLAKE_HOST}
+      SNOWFLAKE_DATABASE: SPRINGFIELD_DB
+      SNOWFLAKE_SCHEMA: SERVING
+      SNOWFLAKE_WAREHOUSE: SPRINGFIELD_WH
+    volumes:
+      - ./auth/clients.json:/app/clients.json:ro
+    depends_on: [ngrok]
+    networks: [springfield]
+
+  api:
+    build: ./api
+    environment:
+      KEYCLOAK_URL: ${KEYCLOAK_PUBLIC_URL}
+      REALM: tenants
+      WEB_CLIENT_ID: springfield-web
+      APP_BASE_URL: http://localhost:8000
+      SNOWFLAKE_HOST: ${SNOWFLAKE_HOST}
+      SNOWFLAKE_DATABASE: SPRINGFIELD_DB
+      SNOWFLAKE_SCHEMA: SERVING
+      SNOWFLAKE_WAREHOUSE: SPRINGFIELD_WH
+      STREAMLIT_APP: SPRINGFIELD_DB.SERVING.SPRINGFIELD_SALES_APP
+      ANALYST_SEMANTIC_VIEW: SPRINGFIELD_DB.SERVING.SPRINGFIELD_SALES
+      PARENT_ORIGIN: http://localhost:8000
+      SERVER_PORT: 8001
+    env_file:
+      - path: auth/web.env
+        required: false
+    ports:
+      - "8001:8001"
+    depends_on: [ngrok]
+    networks: [springfield]
+
+  web:
+    build: ./web
+    environment:
+      API_URL: http://api:8001
+    ports:
+      - "8000:8000"
+    depends_on: [api]
+    networks: [springfield]
+
+networks:
+  springfield:
+
+volumes:
+  keycloak_data:

@@ -1,0 +1,18 @@
+[project]
+name = "springfield-sales-app"
+version = "0.1.0"
+requires-python = ">=3.11"
+# Container runtimes install these from the attached Snowflake artifact
+# repository (snowflake.snowpark.pypi_shared_repository). Without an artifact
+# repository attached to the STREAMLIT object, uv resolves against public PyPI,
+# which the container cannot reach — the container then never becomes healthy and
+# an embedded iframe stays blank while _stcore/embed/startup-status hangs.
+#
+# streamlit >= 1.53.1 is the floor for restricted caller's rights. requests is
+# needed because _snowflake is unavailable in container runtimes, so the Cortex
+# Analyst REST API is called directly.
+dependencies = [
+    "snowflake-snowpark-python",
+    "streamlit>=1.53.1",
+    "requests>=2.31.0",
+]

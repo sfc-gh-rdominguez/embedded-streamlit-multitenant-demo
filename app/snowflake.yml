@@ -1,0 +1,18 @@
+definition_version: 2
+entities:
+  springfield_sales_app:
+    type: streamlit
+    identifier:
+      name: SPRINGFIELD_SALES_APP
+      database: SPRINGFIELD_DB
+      schema: SERVING
+    title: Sales Analytics
+    query_warehouse: SPRINGFIELD_WH
+    runtime_name: SYSTEM$ST_CONTAINER_RUNTIME_PY3_11
+    compute_pool: SYSTEM_COMPUTE_POOL_CPU
+    main_file: streamlit_app.py
+    # The container runtime requires a dependency file; pyproject.toml must be
+    # shipped as an artifact alongside the entrypoint.
+    artifacts:
+      - streamlit_app.py
+      - pyproject.toml
